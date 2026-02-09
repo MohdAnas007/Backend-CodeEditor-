@@ -9,19 +9,22 @@ const path=require('path');
 const fs=require('fs');
 
 app.use(express.json());
+const allowedOrigins = [
+     "http://localhost:5173",
+      "http://localhost:5174",
+     "https://front-end-code-editor-eight.vercel.app", 
+     "https://front-end-code-editor-181a6cw7x-mohd-anas-projects-401cb4ec.vercel.app" 
 
-app.use(cors(
-    {
-        origin:[
-            "http://localhost:5173",
-            'http://localhost:5174',
-            'https://front-end-code-editor-eight.vercel.app'
-        ]
-        ,
-        methods:["GET","POST","PUT","DELETE"],
-        credentials:true
-    }
-))
+]; 
+app.use(
+    cors(
+        { origin: function (origin, callback) 
+        { if (!origin || allowedOrigins.includes(origin)) {
+            
+            callback(null, true); } else { callback(new Error("Not allowed by CORS")); } 
+        }, methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], credentials: true 
+    })
+); 
 app.post('/api/runcode',async(req,res)=>{
     const {code,input,language}=req.body;
 
