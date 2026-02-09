@@ -21,6 +21,14 @@ app.use(cors(
         credentials:true
     }
 ))
+
+
+app.get('/',(req,res)=>{
+
+    return res.status(200).json({
+        message:"backend is running"
+    })
+})
 app.post('/api/runcode',async(req,res)=>{
     const {code,input,language}=req.body;
 
