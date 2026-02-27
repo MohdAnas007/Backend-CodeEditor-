@@ -1,10 +1,9 @@
 const express=require('express');
 require('dotenv').config();
-const Runcode=require('./Services/Runcode');
-
 const PORT= process.env.PORT ;
 const app=express();
 const cors=require('cors');
+const { queue, queueEvents } = require('./Services/Producer');
 
 app.use(express.json());
 
@@ -28,7 +27,9 @@ app.get('/',(req,res)=>{
 
 app.post('/api/runcode',async(req,res)=>{
     const {code,input,language}=req.body;
-    const result= Runcode(code,input,language);
+    const job=await queue.add('code-runner',{code,input,language});
+    const result=await job.waitUntilFinished(queueEvents);
+    
     const {success,output,details}=result;
     if(success===true){
 
