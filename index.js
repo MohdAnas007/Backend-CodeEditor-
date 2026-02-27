@@ -30,7 +30,6 @@ app.post('/api/runcode',async(req,res)=>{
     const {code,input,language}=req.body;
     const result= Runcode(code,input,language);
     const {success,output,details}=result;
-    console.log(output);
     if(success===true){
 
       return res.status(201).json(

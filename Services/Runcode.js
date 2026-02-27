@@ -1,15 +1,15 @@
 const { execSync } = require('child_process');
 const path=require('path');
 const {v4 : uuidv4} = require('uuid')
-
+const langConfig =require('./Utilities/utilities');
 const logger=require('./Log/log');
 const fs=require('fs');
 
-const langConfig={
-            python:{extension:'py',image:'python:3.9-slim',run:'python'},
-            cpp:{extension:'cpp',image:'gcc:latest',run:'g++ code.cpp -o a && ./a'}
-}
+
 const Runcode=(code,input,language)=>{
+
+    const config=langConfig[language];
+
     const id=uuidv4();
 
     const folderPath = path.join(__dirname, `temp_${id}`);
@@ -18,21 +18,21 @@ const Runcode=(code,input,language)=>{
         fs.mkdirSync(folderPath,{recursive:true});
 
     }
-
-    const fileend=langConfig[language].extension;
-    const codefile=`./code.${fileend}`;
-
+    const codefile=`./code.${config.extension}`;
     fs.writeFileSync(path.join(folderPath,codefile),code);
     fs.writeFileSync(path.join(folderPath,'input.txt'),input);
-    const dockerCmd = `docker run --rm \
+
+   
+   const dockerCmd = `docker run --rm \
             -v "${folderPath}":/app \
             -w /app \
+            --network none \
             --memory="128m" \
             --cpus="0.5" \
-            ${langConfig[language].image} \
-            sh -c "timeout 5s ${langConfig[language].run} ${codefile} < input.txt"`;
-    try{
-
+            ${config.image} \
+            sh -c "timeout 5s ${config.command} < input.txt"`;
+    try{    
+      
         const output=execSync(dockerCmd,{
             encoding:'utf-8',
         })
@@ -41,13 +41,12 @@ const Runcode=(code,input,language)=>{
             success:true,
             output:output,
             details:"Code executed successful",
-
-
         }
     }
     catch(error){
 
         if(error.status===124){
+            logger.info("Time limit exceeded");
             return {
                 success:false,
                 error:"Time limit exceeded",
@@ -59,6 +58,7 @@ const Runcode=(code,input,language)=>{
         const stderr=error.stderr ? error.stderr.toString():"";
         const stdout=error.stdout ? error.stdout.toString():"";
 
+        logger.info("Runtime/Syntax error");
 
         return {
             success:false,
@@ -73,6 +73,10 @@ const Runcode=(code,input,language)=>{
         if (fs.existsSync(folderPath)) {
             // logger.info("folder deleted");
             fs.rmSync(folderPath, { recursive: true });
+        }
+        else{
+            logger.info("Error in deleting the folder");
+
         }
 
 
